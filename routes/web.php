@@ -1,0 +1,550 @@
+<?php
+
+use App\Http\Controllers\AdminController\AnnouncementsController;
+use App\Http\Controllers\adminController\AsideCategoryController;
+use App\Http\Controllers\AdminController\AuctionController;
+use App\Http\Controllers\AdminController\BannerController;
+use App\Http\Controllers\AdminController\BudgetController;
+use App\Http\Controllers\AdminController\CareerController;
+use App\Http\Controllers\AdminController\ChairmanController;
+use App\Http\Controllers\AdminController\ContactController;
+use App\Http\Controllers\AdminController\ContactProblemController;
+use App\Http\Controllers\AdminController\ContentController;
+use App\Http\Controllers\adminController\DashboardController;
+use App\Http\Controllers\AdminController\EventsController;
+use App\Http\Controllers\AdminController\HeaderController;
+use App\Http\Controllers\AdminController\ImageGalleryController;
+use App\Http\Controllers\AdminController\ListPdfController;
+use App\Http\Controllers\AdminController\MenuController;
+use App\Http\Controllers\AdminController\PostController;
+use App\Http\Controllers\AdminController\PressController;
+use App\Http\Controllers\AdminController\ProfileController;
+use App\Http\Controllers\AdminController\StaffController;
+use App\Http\Controllers\AdminController\TeamController;
+use App\Http\Controllers\AdminController\TenderController;
+use App\Http\Controllers\AdminController\UnionCouncilController;
+use App\Http\Controllers\AdminController\UsersController;
+use App\Http\Controllers\AdminController\VideoGalleryController;
+use App\Http\Controllers\AdminController\WebsiteController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\ContactController as FrontContactController;
+use App\Http\Controllers\HomeController;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
+*/
+
+Route::get("/optimize", function () {
+    Artisan::call('optimize', ['--quiet' => true]);
+    return "Optimize Successfully!";
+});
+
+
+
+Route::group(['middleware' => 'web'], function () {
+    Route::get('/', [HomeController::class, 'index'])->name('fronts.home');
+
+    Route::get('/details/{slug}', [HomeController::class, 'view_detail'])->name('fronts.detail-view');
+});
+Route::get('login', [LoginController::class, 'showLoginForm'])->name('auth.login-view');
+
+Route::post('/authlogin', [LoginController::class, 'login'])->name('auth.login');
+
+// Auth::routes();
+Route::group(['prefix' => "admin", 'middleware' => 'auth'], function () {
+
+    Route::get('/', [DashboardController::class, 'viewDashboard'])->name('admin.dashboard.admin');
+
+    Route::get('/logout', [LoginController::class, 'logout'])->name('admin.logout');
+
+    Route::group(['prefix' => "aside"], function () {
+        // Create Routes
+        Route::get('category/create/{cate_id?}', [AsideCategoryController::class, 'index'])->name('admin.aside-categories.form');
+        Route::post('category/store', [AsideCategoryController::class, 'store'])->name('admin.aside-categories.store');
+
+        // Updates Routes
+        Route::get('category/update/{id}', [AsideCategoryController::class, 'viewUpdateForm'])->name('admin.aside-categories.update-form');
+        Route::put('category/updates/{id}', [AsideCategoryController::class, 'update'])->name('admin.aside-categories.update');
+
+        // List Routes
+        Route::get('category/list', [AsideCategoryController::class, 'listIndex'])->name('admin.aside-categories.list');
+        Route::get('category/sub-list/{id}', [AsideCategoryController::class, 'listIndex'])->name('admin.aside-sub-categories.list');
+
+        //Delete Routes
+        Route::delete('category/delete/{id}', [AsideCategoryController::class, 'delete'])->name('admin.aside-categories.delete');
+    });
+
+
+
+    Route::group(['prefix' => "banner"], function () {
+        Route::get('/', [BannerController::class, 'viewBanner'])->name('admin.banner.update-form');
+        Route::post('/update', [BannerController::class, 'updateBanner'])->name('admin.banner.update');
+    });
+
+    Route::group(['prefix' => "anouncement" ], function () {
+        Route::get('/', [AnnouncementsController::class, 'index'])->name('admin.anouncement.list');
+        Route::get('/update/{id}', [AnnouncementsController::class, 'viewForm'])->name('admin.anouncement.update-form');
+        Route::put('/update/{id}', [AnnouncementsController::class, 'update'])->name('admin.anouncement.update');
+
+        Route::get('/create', [AnnouncementsController::class, 'viewForm'])->name('admin.anouncement.create-form');
+        Route::post('/create', [AnnouncementsController::class, 'store'])->name('admin.anouncement.create');
+
+        Route::delete('destroy/{id}', [AnnouncementsController::class, 'destroy'])->name('admin.anouncement.delete');
+
+
+    });
+
+    Route::group(['prefix' => "header"], function () {
+        // Create Routes
+        Route::get('category/create', [HeaderController::class, 'viewForm'])->name('admin.header-categories.form');
+        Route::post('category/store', [HeaderController::class, 'store'])->name('admin.header-categories.store');
+
+        // Updates Routes
+        Route::get('category/update/{id}', [HeaderController::class, 'viewUpdateForm'])->name('admin.header-categories.update-form');
+        Route::put('category/updates/{id}', [HeaderController::class, 'update'])->name('admin.header-categories.update');
+
+        // List Routes
+        Route::get('category/list', [HeaderController::class, 'viewList'])->name('admin.header-categories.list');
+        Route::get('category/sub-list/{id}', [HeaderController::class, 'viewList'])->name('admin.header-sub-categories.list');
+
+        //Delete Routes
+
+        Route::middleware(['admin'])->group(function () {
+            Route::delete('category/delete/{id}', [HeaderController::class, 'delete'])->name('admin.header-categories.delete');
+        });
+    });
+    Route::group(['prefix' => "post"], function () {
+        Route::get('{type}/create', [PostController::class, 'viewForm'])->name('admin.post.show-form');;
+        Route::post('{type}/store', [PostController::class, 'store'])->name('admin.post.store');
+        Route::get('/update/{id}', [PostController::class, 'viewUpdateForm'])->name('admin.post.show-update-form');
+        Route::put('update/{id}', [PostController::class, 'update'])->name('admin.post.update');
+        Route::get('/list/{type?}', [PostController::class, 'viewList'])->name('admin.post.show-list');
+
+
+        Route::middleware(['admin'])->group(function () {
+            Route::delete('destory/{id}', [PostController::class, 'destory'])->name('admin.post.delete');
+        });
+    });
+
+    // EVENTS
+    Route::group(['prefix' => "events"], function () {
+        Route::get('{type}/create', [EventsController::class, 'viewForm'])->name('admin.event.show-form');;
+        Route::post('{type}/store', [EventsController::class, 'store'])->name('admin.events.store');
+        Route::get('/update/{id}', [EventsController::class, 'viewUpdateForm'])->name('admin.event.show-update-form');
+        Route::put('update/{id}', [EventsController::class, 'update'])->name('admin.event.update');
+        Route::get('/list/{type?}', [EventsController::class, 'viewList'])->name('admin.event.show-list');
+
+
+        Route::middleware(['admin'])->group(function () {
+            Route::delete('destory/{id}', [PostController::class, 'destory'])->name('admin.post.delete');
+        });
+    });
+
+    // Image Gallery
+    Route::group(['prefix' => "i_gallery"], function () {
+        Route::get('{type}/create', [ImageGalleryController::class, 'viewForm'])->name('admin.i_gallery.show-form');;
+        Route::post('{type}/store', [ImageGalleryController::class, 'store'])->name('admin.i_gallery.store');
+        Route::get('/update/{id}', [ImageGalleryController::class, 'viewUpdateForm'])->name('admin.i_gallery.show-update-form');
+        Route::put('update/{id}', [ImageGalleryController::class, 'update'])->name('admin.i_gallery.update');
+        Route::get('/list/{type?}', [ImageGalleryController::class, 'viewList'])->name('admin.i_gallery.show-list');
+
+
+        Route::middleware(['admin'])->group(function () {
+            Route::delete('destory/{id}', [PostController::class, 'destory'])->name('admin.post.delete');
+        });
+    });
+
+     // Image Gallery
+     Route::group(['prefix' => "v_gallery"], function () {
+        Route::get('{type}/create', [VideoGalleryController::class, 'viewForm'])->name('admin.v_gallery.show-form');;
+        Route::post('{type}/store', [VideoGalleryController::class, 'store'])->name('admin.v_gallery.store');
+        Route::get('/update/{id}', [VideoGalleryController::class, 'viewUpdateForm'])->name('admin.v_gallery.show-update-form');
+        Route::put('update/{id}', [VideoGalleryController::class, 'update'])->name('admin.v_gallery.update');
+        Route::get('/list/{type?}', [VideoGalleryController::class, 'viewList'])->name('admin.v_gallery.show-list');
+
+
+        Route::middleware(['admin'])->group(function () {
+            Route::delete('destory/{id}', [PostController::class, 'destory'])->name('admin.post.delete');
+        });
+    });
+
+    // Header Navigation Menu Manage
+    Route::group(['prefix' => "menu"], function () {
+        Route::get('{type}/create', [MenuController::class, 'viewForm'])->name('admin.menu.show-form');
+        Route::post('{type}/store', [MenuController::class, 'store'])->name('admin.menu.store');
+        Route::get('/update/{id}', [MenuController::class, 'viewUpdateForm'])->name('admin.menu.show-update-form');
+        Route::put('update/{id}', [MenuController::class, 'update'])->name('admin.menu.update');
+        Route::get('/list', [MenuController::class, 'viewList'])->name('admin.menu.show-list');
+        Route::put('toggle-status/{id}', [MenuController::class, 'toggleStatus'])->name('admin.menu.toggle-status');
+
+        Route::middleware(['admin'])->group(function () {
+            Route::delete('destory/{id}', [PostController::class, 'destory'])->name('admin.post.delete');
+        });
+    });
+
+    // Related Page toggle status
+    Route::put('toggle-status/{id}', [WebsiteController::class, 'toggleRelatedPageStatus'])->name('admin.relatedLinks.toggle-status');
+    Route::get('related-page/create', [WebsiteController::class, 'viewRelatedPageForm'])->name('admin.relatedLinks.create-form');
+    Route::post('related-page/store', [WebsiteController::class, 'storeRelatedPage'])->name('admin.relatedLinks.store');
+    Route::get('related-page-update/{id}', [WebsiteController::class, 'viewRelatedPageForm'])->name('admin.relatedLinks.update-form');
+    // Route::put('update/{id}', [WebsiteController::class, 'updateRelatedPage'])->name('admin.relatedLinks.update');
+    Route::middleware(['admin'])->group(function () {
+        Route::delete('destory/{id}', [WebsiteController::class, 'destoryRelatedPage'])->name('admin.relatedLinks.delete');
+    });
+
+
+
+
+    // Useful Page toggle status
+    Route::put('useful-toggle-status/{id}', [WebsiteController::class, 'toggleUsefulPageStatus'])->name('admin.usefulLinks.useful-toggle-status');
+
+
+    // HEADER PAGES SECTION
+    Route::get('/page-edit/{id}', [WebsiteController::class, 'viewPage'])->name('admin.header-pages.page-edit');
+    // Route::get('/about-edit/{id}', [WebsiteController::class, 'viewAboutPage'])->name('admin.header-pages.about-edit');
+    Route::post('update-about-page/{id}', [WebsiteController::class, 'updateAboutPage'])->name('admin.header-pages.about-update');
+
+    // I WANT TO
+    Route::get('/iwantto', [WebsiteController::class, 'viewIwantToPage'])->name('admin.header-pages.page-edit');
+
+
+
+    Route::group(['prefix' => "settings"], function () {
+        Route::get('/site', [WebsiteController::class, 'view_settings'])->name('admin.web-settings.site-form');
+        Route::put('/update/site', [WebsiteController::class, 'update_settings'])->name('admin.web-settings.site-update');
+
+        Route::get('/profile', [ProfileController::class, 'update_view'])->name('admin.profile.update');
+        Route::put('/update/profile/{id}', [ProfileController::class, 'update'])->name('admin.profile-update');
+    });
+
+    Route::group(['prefix' => "events"], function () {
+        Route::get('/create', [EventsController::class, 'viewForm'])->name('admin.events.create-form');
+        Route::post('/create', [EventsController::class, 'store'])->name('admin.events.create');
+
+        Route::get('/list', [EventsController::class, 'viewList'])->name('admin.events.list');
+
+        Route::get('/update/{id}', [EventsController::class, 'viewUpdateForm'])->name('admin.events.update-form');
+        Route::put('/update/{id}', [EventsController::class, 'update'])->name('admin.events.update');
+
+        Route::delete('destory/{id}', [EventsController::class, 'destory'])->name('admin.events.delete');
+    });
+
+    Route::group(['prefix' => "i_gallery"], function () {
+        Route::get('/create', [ImageGalleryController::class, 'viewForm'])->name('admin.i_gallery.create-form');
+        Route::post('/create', [ImageGalleryController::class, 'store'])->name('admin.i_gallery.create');
+
+        Route::get('/list', [ImageGalleryController::class, 'viewList'])->name('admin.i_gallery.list');
+
+        Route::get('/update/{id}', [ImageGalleryController::class, 'viewUpdateForm'])->name('admin.i_gallery.update-form');
+        Route::put('/update/{id}', [ImageGalleryController::class, 'update'])->name('admin.i_gallery.update');
+
+        Route::delete('destory/{id}', [ImageGalleryController::class, 'destory'])->name('admin.i_gallery.delete');
+    });
+
+    Route::group(['prefix' => "v_gallery"], function () {
+        Route::get('/create', [VideoGalleryController::class, 'viewForm'])->name('admin.v_gallery.create-form');
+        Route::post('/create', [VideoGalleryController::class, 'store'])->name('admin.v_gallery.create');
+
+        Route::get('/list', [VideoGalleryController::class, 'viewList'])->name('admin.v_gallery.list');
+
+        Route::get('/update/{id}', [VideoGalleryController::class, 'viewUpdateForm'])->name('admin.v_gallery.update-form');
+        Route::put('/update/{id}', [VideoGalleryController::class, 'update'])->name('admin.v_gallery.update');
+
+        Route::delete('destory/{id}', [VideoGalleryController::class, 'destory'])->name('admin.v_gallery.delete');
+    });
+
+
+    Route::group(['prefix' => "team"], function () {
+        Route::get('/create', [TeamController::class, 'viewForm'])->name('admin.team.create-form');
+        Route::post('/create', [TeamController::class, 'store'])->name('admin.team.create');
+
+        Route::get('/list', [TeamController::class, 'index'])->name('admin.team.list');
+
+        Route::get('/update/{id}', [TeamController::class, 'viewForm'])->name('admin.team.update-form');
+        Route::put('/update/{id}', [TeamController::class, 'update'])->name('admin.team.update');
+
+        Route::delete('destroy/{id}', [TeamController::class, 'destroy'])->name('admin.team.delete');
+    });
+
+    Route::group(['prefix' => "users"], function () {
+        Route::get('/create', [UsersController::class, 'viewForm'])->name('admin.user.create-form');
+        Route::post('/create', [UsersController::class, 'store'])->name('admin.user.create');
+
+        Route::get('/list', [UsersController::class, 'index'])->name('admin.user.list');
+
+        Route::get('/update/{id}', [UsersController::class, 'viewForm'])->name('admin.user.update-form');
+        Route::put('/update/{id}', [UsersController::class, 'update'])->name('admin.user.update');
+
+        Route::delete('destroy/{id}', [UsersController::class, 'destroy'])->name('admin.user.delete');
+    });
+
+    Route::group(['prefix' => "listview"], function () {
+        Route::get('/create', [ListPdfController::class, 'viewForm'])->name('admin.listview.create-form');
+        Route::post('/create', [ListPdfController::class, 'store'])->name('admin.listview.create');
+
+        Route::get('/list', [ListPdfController::class, 'index'])->name('admin.listview.list');
+
+        Route::get('/update/{id}', [ListPdfController::class, 'viewForm'])->name('admin.listview.update-form');
+        Route::put('/update/{id}', [ListPdfController::class, 'update'])->name('admin.listview.update');
+
+        Route::delete('destroy/{id}', [ListPdfController::class, 'destroy'])->name('admin.listview.delete');
+    });
+
+    Route::group(['prefix' => "content"], function () {
+
+        Route::post('/update', [ContentController::class, 'update'])->name('front.content.update');
+        Route::post('/update-image', [ContentController::class, 'ImageUpdate'])->name('front.content.update-image');
+    });
+
+    Route::group(['prefix' => "contact-problem"], function () {
+        Route::get('/create', [ContactProblemController::class, 'viewForm'])->name('admin.contact-problem.create-form');
+        Route::post('/create', [ContactProblemController::class, 'store'])->name('admin.contact-problem.create');
+
+        Route::get('/list', [ContactProblemController::class, 'index'])->name('admin.contact-problem.list');
+
+        Route::get('/update/{id}', [ContactProblemController::class, 'viewForm'])->name('admin.contact-problem.update-form');
+        Route::put('/update/{id}', [ContactProblemController::class, 'update'])->name('admin.contact-problem.update');
+
+        Route::delete('destroy/{id}', [ContactProblemController::class, 'destroy'])->name('admin.contact-problem.delete');
+    });
+
+    Route::group(['prefix' => "contacts"], function () {
+        Route::get('/list', [ContactController::class, 'index'])->name('admin.contact.list');
+        Route::delete('destroy/{id}', [ContactController::class, 'destroy'])->name('admin.contact.delete');
+    });
+
+    Route::group(['prefix' => "chairman"], function () {
+        Route::get('/create', [ChairmanController::class, 'viewForm'])->name('admin.chairman.create-form');
+        Route::post('/create', [ChairmanController::class, 'store'])->name('admin.chairman.create');
+
+        Route::get('/list', [ChairmanController::class, 'index'])->name('admin.chairman.list');
+
+        Route::get('/update/{id}', [ChairmanController::class, 'viewForm'])->name('admin.chairman.update-form');
+        Route::put('/update/{id}', [ChairmanController::class, 'update'])->name('admin.chairman.update');
+
+        Route::delete('destroy/{id}', [ChairmanController::class, 'destroy'])->name('admin.chairman.delete');
+    });
+
+
+    // TABLES PAGES
+    Route::group(['prefix' => "union_council"], function () {
+        Route::get('/create', [UnionCouncilController::class, 'viewForm'])->name('admin.union_council.create-form');
+        Route::post('/create', [UnionCouncilController::class, 'store'])->name('admin.union_council.create');
+
+        Route::get('/list', [UnionCouncilController::class, 'index'])->name('admin.union_council.list');
+
+        Route::get('/update/{id}', [UnionCouncilController::class, 'viewForm'])->name('admin.union_council.update-form');
+        Route::put('/update/{id}', [UnionCouncilController::class, 'update'])->name('admin.union_council.update');
+
+        Route::delete('destroy/{id}', [UnionCouncilController::class, 'destroy'])->name('admin.union_council.delete');
+    });
+
+    Route::group(['prefix' => "staff"], function () {
+        Route::get('/create', [StaffController::class, 'viewForm'])->name('admin.staff.create-form');
+        Route::post('/create', [StaffController::class, 'store'])->name('admin.staff.create');
+
+        Route::get('/list', [StaffController::class, 'index'])->name('admin.staff.list');
+
+        Route::get('/update/{id}', [StaffController::class, 'viewForm'])->name('admin.staff.update-form');
+        Route::put('/update/{id}', [StaffController::class, 'update'])->name('admin.staff.update');
+
+        Route::delete('destroy/{id}', [StaffController::class, 'destroy'])->name('admin.staff.delete');
+    });
+
+    Route::group(['prefix' => "tenders"], function () {
+        Route::get('/create', [TenderController::class, 'viewForm'])->name('admin.tender.create-form');
+        Route::post('/create', [TenderController::class, 'store'])->name('admin.tender.create');
+
+        Route::get('/list', [TenderController::class, 'index'])->name('admin.tender.list');
+
+        Route::get('/update/{id}', [TenderController::class, 'viewForm'])->name('admin.tender.update-form');
+        Route::put('/update/{id}', [TenderController::class, 'update'])->name('admin.tender.update');
+
+        Route::delete('destroy/{id}', [TenderController::class, 'destroy'])->name('admin.tender.delete');
+    });
+
+    // Career page
+
+    Route::group(['prefix' => "career"], function () {
+        Route::get('/create', [CareerController::class, 'viewForm'])->name('admin.career.create-form');
+        Route::post('/create', [CareerController::class, 'store'])->name('admin.career.create');
+
+        Route::get('/list', [CareerController::class, 'index'])->name('admin.career.list');
+
+        Route::get('/update/{id}', [CareerController::class, 'viewForm'])->name('admin.career.update-form');
+        Route::put('/update/{id}', [CareerController::class, 'update'])->name('admin.career.update');
+
+        Route::delete('destroy/{id}', [CareerController::class, 'destroy'])->name('admin.career.delete');
+    });
+
+    // Press Release
+    Route::group(['prefix' => "press_release"], function () {
+        Route::get('/create', [PressController::class, 'viewForm'])->name('admin.press.create-form');
+        Route::post('/create', [PressController::class, 'store'])->name('admin.press.create');
+
+        Route::get('/list', [PressController::class, 'index'])->name('admin.press.list');
+
+        Route::get('/update/{id}', [PressController::class, 'viewForm'])->name('admin.press.update-form');
+        Route::put('/update/{id}', [PressController::class, 'update'])->name('admin.press.update');
+
+        Route::delete('destroy/{id}', [PressController::class, 'destroy'])->name('admin.press.delete');
+    });
+
+
+    Route::group(['prefix' => "auctions"], function () {
+        Route::get('/create', [AuctionController::class, 'viewForm'])->name('admin.auction.create-form');
+        Route::post('/create', [AuctionController::class, 'store'])->name('admin.auction.create');
+
+        Route::get('/list', [AuctionController::class, 'index'])->name('admin.auction.list');
+
+        Route::get('/update/{id}', [AuctionController::class, 'viewForm'])->name('admin.auction.update-form');
+        Route::put('/update/{id}', [AuctionController::class, 'update'])->name('admin.auction.update');
+
+        Route::delete('destroy/{id}', [AuctionController::class, 'destroy'])->name('admin.auction.delete');
+    });
+
+    Route::group(['prefix' => "budget"], function () {
+        Route::get('/create', [BudgetController::class, 'viewForm'])->name('admin.budget.create-form');
+        Route::post('/create', [BudgetController::class, 'store'])->name('admin.budget.create');
+
+        Route::get('/list', [BudgetController::class, 'index'])->name('admin.budget.list');
+
+        Route::get('/update/{id}', [BudgetController::class, 'viewForm'])->name('admin.budget.update-form');
+        Route::put('/update/{id}', [BudgetController::class, 'update'])->name('admin.budget.update');
+
+        Route::delete('destroy/{id}', [BudgetController::class, 'destroy'])->name('admin.budget.delete');
+    });
+
+});
+
+ // Map
+ Route::group(['prefix' => "map"], function () {
+    Route::get('/view', [WebsiteController::class, 'viewMap'])->name('admin.map.view-map');
+    Route::get('/show-map-form', [WebsiteController::class, 'showMapForm'])->name('admin.map.show-map-form');
+    Route::post('/store-map', [WebsiteController::class, 'storeMap'])->name('admin.map.store-map');
+    Route::post('/update', [WebsiteController::class, 'updateMap'])->name('admin.map.update-map');
+});
+
+
+
+Route::get('/page/{slug}', [WebsiteController::class, 'view_page'])->name('fronts.header-pages');
+
+
+Route::get('/about', function () {
+    return view("fronts.about");
+});
+
+Route::get('/contact',  [FrontContactController::class, 'index'])->name('fronts.contact.view');
+Route::post('/contact',  [FrontContactController::class, 'store'])->name('fronts.contact.store');
+
+Route::get('/listview',  [HomeController::class, 'list_view'])->name('fronts.list-view');
+Route::get('/head-of-department',  [HomeController::class, 'view_staff'])->name('fronts.staff-view');
+
+Route::get('/organogram',  [HomeController::class, 'view_chairmans'])->name('fronts.chairman');
+
+Route::post('/search-post', [BannerController::class, 'fetchPost'])->name('admin.banner.search');
+// Route::get('/update-titles', [PostController::class, 'decode_post_title']);
+// Route::get('/events', function () {
+//     return view("fronts.events");
+// });
+Route::get('/gallery', function () {
+    return view("fronts.gallery");
+});
+Route::get('/vgallery', function () {
+    return view("fronts.vgallery");
+});
+Route::get('/press', function () {
+    return view("fronts.press");
+});
+Route::get('/publication', function () {
+    return view("fronts.publication");
+});
+Route::get('/vision', function () {
+    return view("fronts.vision");
+});
+
+Route::get('/faqs', function () {
+    return view("fronts.faqs");
+});
+Route::get('/tenders', function () {
+    return view("fronts.tenders");
+});
+Route::get('/auctions', function () {
+    return view("fronts.auctions");
+});
+Route::get('/budget', function () {
+    return view("fronts.budget");
+});
+
+Route::get('/iwantto', [WebsiteController::class, 'viewIwantToPage'])->name('admin.header-pages.page-edit');
+
+// Route::get('/iwantto', function () {
+//     return view("fronts.iwantto");
+// });
+Route::get('/pay', function () {
+    return view("fronts.pay");
+});
+Route::get('/applay', function () {
+    return view("fronts.applay");
+});
+Route::get('/book', function () {
+    return view("fronts.book");
+});
+Route::get('/citykarachi', function () {
+    return view("fronts.citykarachi");
+});
+Route::get('/job', function () {
+    return view("fronts.job");
+});
+Route::get('/libary', function () {
+    return view("fronts.libary");
+});
+Route::get('/hostpital', function () {
+    return view("fronts.hostpital");
+});
+Route::get('/sports', function () {
+    return view("fronts.sports");
+});
+Route::get('/issue', function () {
+    return view("fronts.issue");
+});
+Route::get('/fine', function () {
+    return view("fronts.fine");
+});
+Route::get('/shelter', function () {
+    return view("fronts.shelter");
+});
+Route::get('/elder', function () {
+    return view("fronts.elder");
+});
+Route::get('/message', function () {
+    return view("fronts.message");
+});
+Route::get('/functions', function () {
+    return view("fronts.functions");
+});
+Route::get('/trade', function () {
+    return view("fronts.trade");
+});
+// Route::get('/career', function () {
+//     return view("fronts.career");
+// });
+Route::get('/management', function () {
+    return view("fronts.management");
+});
+
+Route::get('/career', [WebsiteController::class, 'viewCareerPage'])->name('admin.career');
+
+
+Route::get('related-page-update/{id}', [WebsiteController::class, 'viewUpdateRelatedPage'])->name('admin.relatedLinks.update-form');
+Route::put('related-page-update/{id}', [WebsiteController::class, 'updateRelatedPage'])->name('relatedLinks.update-forms');
+
